@@ -1,4 +1,4 @@
-package morph;
+package project;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -8,11 +8,7 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.ArrayList;
 
-import kr.ac.kaist.swrc.jhannanum.comm.Sentence;
-import mongo.MongoTest;
-import mongo.SentenceModifier;
-
-public class AnalyzeServer_
+public class AnalyzeServer
 {
 	public static void main(String[] args) 
 	{
@@ -50,10 +46,9 @@ class Secho_ extends Thread
 		try 
 		{
 			System.out.println("Client has accepted...");
-			MongoTest mt = new MongoTest();
-			CorpusAnalyzer_ ca = new CorpusAnalyzer_();
-			SimilarityAnalyzer_ smi = new SimilarityAnalyzer_(mt);
-			BufferedReader br = new BufferedReader(new InputStreamReader(client.getInputStream()));
+			Mongo m = new Mongo();
+			SimilarityAnalyzer smi = new SimilarityAnalyzer(m);
+			BufferedReader br = new BufferedReader(new InputStreamReader(client.getInputStream(), "UTF-8"));
 			PrintWriter pw = new PrintWriter(client.getOutputStream());
 			String readData = "";
 
@@ -64,9 +59,10 @@ class Secho_ extends Thread
 				{
 					continue;
 				}
-				
+
 				System.out.println("readData : " + readData);
 
+				long startTime = System.currentTimeMillis();
 				if(readData.equals("exit"))
 				{
 					pw.println("exit");
@@ -77,47 +73,74 @@ class Secho_ extends Thread
 				{
 					String[] d = readData.split(" ");
 					String sendData = "";
+					if(d.length == 1)
+					{
+						sendData += readData + "@no_error@ @ @ @";
+					}
 					for(int i = 0; i < d.length - 1; ++i)
 					{
 						String part = d[i] + " " + d[i+1];
-						sendData += part;
 						
+						if(part.substring(0, part.length()-1).contains("[.]")
+								|| part.substring(0, part.length()-1).contains(",")
+								|| part.substring(0, part.length()-1).contains("!")
+								|| part.substring(0, part.length()-1).contains("[?]"))
+						{
+							continue;
+						}
+						
+						sendData += part;
+
 						part = part.replaceAll("[^[0-9]]","ⓝ");
+						part = part.replaceAll("[.]","");
+						part = part.replaceAll(",","");
+						part = part.replaceAll("!","");
+						part = part.replaceAll("[?]","");
+						
 						while(part.contains("ⓝⓝ"))
 						{
 							part = part.replaceAll("ⓝⓝ", "ⓝ");
 						}
-						
-						System.out.println(part);						
-						
-						if(!ca.isValid(part) || smi.isContains(part))
+
+						System.out.println(part);
+
+						if(!smi.isValid(part) || smi.isContains(part))
 						{
 							sendData += "@no_error@ @ @ @";
 						}
 						else
 						{
 							sendData += "@doubt@";
-							
-							ArrayList<String> arr = smi.getRecommend(sendData.split("@")[i*5]);
-							
+
+							ArrayList<String> arr = null;
+							/*
+							if(smi.isContainsCache(part))
+							{
+								arr = smi.getCache(part);
+								System.out.println("cache");
+							}
+							else
+							{
+								arr = smi.getRecommend(part);
+								m.getCollectionCache(part.charAt(0) + "");
+								m.insert_Cache(part, arr.get(0), arr.get(1), arr.get(2));
+							}
+							*/
+							arr = smi.getRecommend(part);
 							for(int j = 0; j < 3; ++j)
 							{
-								if(arr.size() > j)
-								{
-									sendData += arr.get(j) + "@";
-								}
-								else
-								{
-									sendData += " @";
-								}
+								sendData += arr.get(j) + "@";
 							}
-						}		
+						}
 					}
-					
+
 					System.out.println("sendData : " + sendData);
 					pw.println(sendData);
 					pw.flush();
 				}
+				
+				long endTime = System.currentTimeMillis();
+				System.out.println("경과시간 : " + (endTime - startTime));
 			}
 		} 
 		catch (IOException e)

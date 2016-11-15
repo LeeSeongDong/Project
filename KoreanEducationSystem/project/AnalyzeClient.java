@@ -1,4 +1,4 @@
-package morph;
+package project;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -91,7 +91,7 @@ public class AnalyzeClient
 	public static void main(String[] args) 
 	{
 		AnalyzeClient ac = new AnalyzeClient();
-		ac.connect("192.168.10.123", 4000);
+		ac.connect("localhost", 80);
 		
 		try
 		{
@@ -110,7 +110,6 @@ public class AnalyzeClient
 				{
 					System.out.println(msg[i]);
 				}
-
 			}
 			
 			ac.close();

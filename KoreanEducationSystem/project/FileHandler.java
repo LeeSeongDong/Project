@@ -1,4 +1,4 @@
-package mongo;
+package project;
 
 
 import java.io.BufferedReader;
@@ -96,5 +96,4 @@ public class FileHandler {
 
 		return result;
 	}
-
 }

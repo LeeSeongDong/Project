@@ -1,4 +1,4 @@
-package morph;
+package project;
 
 import java.io.BufferedReader;
 import java.io.FileReader;
@@ -6,24 +6,22 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Set;
 
 import com.google.common.collect.Sets;
-import com.mongodb.Mongo;
 
-import mongo.MongoTest;
 
-public class SimilarityAnalyzer_
+public class SimilarityAnalyzer
 {
-	private MongoTest mt;
+	private Mongo m;
+	
 	private static final char[] CHO = 
 		{0x3131, 0x3132, 0x3134, 0x3137, 0x3138, 0x3139, 0x3141, 0x3142, 0x3143, 0x3145,
 				0x3146, 0x3147, 0x3148, 0x3149, 0x314a, 0x314b, 0x314c, 0x314d, 0x314e};
 
-	public SimilarityAnalyzer_(MongoTest mt)
+	public SimilarityAnalyzer(Mongo m)
 	{
-		this.mt = mt;
-		mt.con();
+		this.m = m;
+		m.connect();
 	}
 
 	// No intermediate HashSet
@@ -52,6 +50,39 @@ public class SimilarityAnalyzer_
 		}
 		return count;
 	}
+	
+	public  boolean isValid(String str)
+	{
+		int size = str.length();
+		for(int i = 0; i < size; ++i)
+		{
+			if((str.codePointAt(i) >= 44032 && str.codePointAt(i) <= 55203))		//한글
+			{
+				continue;
+			}
+			else if(str.codePointAt(i) >= 48 && str.codePointAt(i) <= 57)		//숫자
+			{
+				continue;
+			}
+			else if(str.codePointAt(i) >= 65 && str.codePointAt(i) <= 90)		//영대문자
+			{
+				continue;
+			}
+			else if(str.codePointAt(i) >= 97 && str.codePointAt(i) <= 122)		//영소문자
+			{
+				continue;
+			}
+			else if(str.codePointAt(i) == 32 || str.codePointAt(i) == 33 || str.codePointAt(i) == 63 || str.codePointAt(i) == 44)
+			{
+				continue;
+			}
+
+			return false;
+		}
+
+		return true;
+	}
+	
 	public static HashSet<Integer> getIntersection(HashSet<Integer> set1, HashSet<Integer> set2)
 	{
 		if(set1 == null || set2 == null)
@@ -137,9 +168,9 @@ public class SimilarityAnalyzer_
 
 	public boolean isContains(String str)
 	{
-		mt.getCollectionEojeol(getCHO(str.charAt(0)));
+		m.getEojeolCollection(str.charAt(0) + "");
 		
-		if(mt.isExist_Eojeol(str))
+		if(m.isExist_Eojeol(str))
 		{
 			return true;
 		}
@@ -147,6 +178,25 @@ public class SimilarityAnalyzer_
 		{
 			return false;
 		}
+	}
+	
+	public boolean isContainsCache(String str)
+	{
+		m.getCacheCollection(str.charAt(0) + "");
+		
+		if(m.isExist_Cache(str))
+		{
+			return true;
+		}
+		else
+		{
+			return false;
+		}
+	}
+	
+	public ArrayList<String> getCache(String eojeol)
+	{
+		return m.getCache(eojeol);
 	}
 
 	public String getCHO(char c)
@@ -167,7 +217,7 @@ public class SimilarityAnalyzer_
 	//교집합
 	public HashMap<Integer, Integer> findRecommendation(String str)
 	{		
-		mt.getCollectionIndex(getCHO(str.charAt(0)));
+		m.getIndexCollection("" + str.charAt(0));
 
 		str = str.replaceAll("[^[0-9]]","ⓝ");
 
@@ -178,17 +228,13 @@ public class SimilarityAnalyzer_
 		str = str.replaceAll(" ", "").trim();
 
 
-		HashMap<String, HashSet<Integer>> hm = mt.getIndexs(str);
+		HashMap<String, HashSet<Integer>> hm = m.getIndexs(str);
 		HashMap<Integer, Integer> result = new HashMap<Integer, Integer>();
 
-
 		int size = str.length();
-		for(int i = 0; i < size-1; i += 2)
+		System.out.println("size : " + size);
+		for(int i = 1; i < size-1; i += 2)
 		{
-			if(str.charAt(0) == 'ⓝ' && i == 0)
-			{
-				continue;
-			}
 			HashSet<Integer> hs = getIntersection(hm.get("" + str.charAt(i)), hm.get("" + str.charAt(i+1)));
 			HashMap<Integer, Integer> temp = new HashMap<Integer, Integer>();
 			if(hs == null)
@@ -202,7 +248,7 @@ public class SimilarityAnalyzer_
 
 			for(int j = 0; j < size; ++j)
 			{
-				if(j == i || j == i+1 || (str.charAt(0) == 'ⓝ' && j == 0))
+				if(j == i || j == i+1)
 				{
 					continue;
 				}
@@ -243,7 +289,7 @@ public class SimilarityAnalyzer_
 	//카운팅
 	public HashMap<Integer, Integer> findRecommendation2(String str)
 	{
-		mt.getCollectionIndex(getCHO(str.charAt(0)));
+		m.getIndexCollection(getCHO(str.charAt(0)));
 
 		str = str.replaceAll("[^[0-9]]","ⓝ");
 
@@ -253,7 +299,7 @@ public class SimilarityAnalyzer_
 		}
 		str = str.replaceAll(" ", "").trim();
 
-		HashMap<String, HashSet<Integer>> hm = mt.getIndexs(str);
+		HashMap<String, HashSet<Integer>> hm = m.getIndexs(str);
 		HashMap<Integer, Integer> result = new HashMap<Integer, Integer>();
 
 		int size = str.length();
@@ -284,18 +330,29 @@ public class SimilarityAnalyzer_
 	public ArrayList<String> getRecommend(String initStr)
 	{		
 		String str = initStr;
-		long startTime = System.currentTimeMillis();
 
-		mt.getCollectionEojeol(getCHO(initStr.charAt(0)) + "");
+		m.getEojeolCollection(initStr.charAt(0) + "");
 
 		ArrayList<String> result = new ArrayList<String>();
 
+		System.out.println("aaaa");
 		HashMap<Integer, Integer> hm = findRecommendation(str);
+		if(hm.size() == 0)
+		{
+			result.add(" ");
+			result.add(" ");
+			result.add(" ");
+			return result;
+		}
+		
 		ArrayList<Integer> arr = new ArrayList<Integer>(hm.keySet());
 		Collections.sort(arr, new Comp2(hm));
+		
 		int max = hm.get(arr.get(0));
+		System.out.println(hm.size());
+		
 		System.out.println("max : " + max);
-		mt.getCollectionEojeol(getCHO(initStr.charAt(0)) + "");
+		m.getEojeolCollection(initStr.charAt(0) + "");
 
 		int size = arr.size();
 		for(int i = 0; i < size; ++i)
@@ -305,7 +362,7 @@ public class SimilarityAnalyzer_
 				continue;
 			}
 			
-			String corpus = mt.getEojeol(arr.get(i));
+			String corpus = m.getEojeol(arr.get(i));
 			if(corpus == null)
 			{
 				continue;
@@ -316,26 +373,13 @@ public class SimilarityAnalyzer_
 
 		Collections.sort(result, new Comp3(initStr));
 		
+		while(result.size() < 3)
+		{
+			result.add(" ");
+		}
+		
 		System.out.println(result);
 		
-		long endTime = System.currentTimeMillis();
-		System.out.println("경과시간 : " + (endTime - startTime));
-		
 		return result;
-	}
-
-
-	public static void main(String[] args)
-	{
-		MongoTest mt = new MongoTest();
-		SimilarityAnalyzer_ smi = new SimilarityAnalyzer_(mt);
-
-		ArrayList<String> arr = smi.getRecommend("밥을 찢는다");
-
-		for(int i = 0; i < arr.size(); ++i)
-		{
-			//System.out.println(arr.get(i));
-		}
-
 	}
 }
