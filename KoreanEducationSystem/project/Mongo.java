@@ -39,7 +39,7 @@ public class Mongo
 
 	public void getIndexCollection(String collName)
 	{
-		coll = db.getCollection(collName + "_Index");
+		coll = db.getCollection(collName + "_In");
 		DBObject index = new BasicDBObject("umjeol",1);
 		DBObject option = new BasicDBObject("unique",1);
 
@@ -265,7 +265,7 @@ public class Mongo
 
 		for(int i=4; i < 5; i++)
 		{
-			for(int j=0; j <= numOfFile[i] ; j++)
+			for(int j=7; j <= 7 ; j++)
 			{
 				System.out.println("=========================================" + corpusList[i] + j + "시작!" + new Date().toString() + " ===============================================");
 				ArrayList<String> sentence = sm.getSentence(fh.fileLoad(corpusList[i] + j + ".txt"));
@@ -305,5 +305,11 @@ public class Mongo
 				System.out.println("=========================================" + corpusList[i] + j + "완료!" + new Date().toString() + " ===============================================");
 			}
 		}
+	}
+	
+	public static void main(String[] args)
+	{
+		Mongo m = new Mongo();
+		m.insertCorpus();
 	}
 }

@@ -333,9 +333,9 @@ public class SimilarityAnalyzer
 
 		m.getEojeolCollection(initStr.charAt(0) + "");
 
+		ArrayList<String> temp = new ArrayList<String>();
 		ArrayList<String> result = new ArrayList<String>();
 
-		System.out.println("aaaa");
 		HashMap<Integer, Integer> hm = findRecommendation(str);
 		if(hm.size() == 0)
 		{
@@ -349,9 +349,7 @@ public class SimilarityAnalyzer
 		Collections.sort(arr, new Comp2(hm));
 		
 		int max = hm.get(arr.get(0));
-		System.out.println(hm.size());
-		
-		System.out.println("max : " + max);
+
 		m.getEojeolCollection(initStr.charAt(0) + "");
 
 		int size = arr.size();
@@ -372,14 +370,24 @@ public class SimilarityAnalyzer
 		}
 
 		Collections.sort(result, new Comp3(initStr));
+		WeightedEDA w = new WeightedEDA();
 		
-		while(result.size() < 3)
+		
+		for(int i = 0; i < (result.size() < 3 ? result.size() : 3 ); ++i)
 		{
-			result.add(" ");
+			if(w.getEditDistance(initStr, result.get(i)) < 10)
+			{
+				temp.add(result.get(i));
+			}
 		}
 		
-		System.out.println(result);
+		while(temp.size() < 3)
+		{
+			temp.add(" ");
+		}
 		
-		return result;
+		System.out.println(temp);
+		
+		return temp;
 	}
 }

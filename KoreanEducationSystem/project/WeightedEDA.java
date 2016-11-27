@@ -12,10 +12,9 @@ public class WeightedEDA
 	{
 		String nfd1 = Normalizer.normalize(word1, Normalizer.Form.NFD);
 		String nfd2 = Normalizer.normalize(word2, Normalizer.Form.NFD);
-		System.out.println(nfd1 + " : " + nfd1.length());
-		System.out.println(nfd2 + " : " + nfd2.length());
+
 		double result = analyze(nfd1, nfd2);
-		
+		System.out.println(word1 + " : " + word2 + " = " + result);
 		return (double)Math.round(result*1000)/1000;
 	}
 
@@ -204,7 +203,7 @@ public class WeightedEDA
 				} 
 				else 
 				{
-					double replace = dp[i][j] + getWeight(c1, c2);
+					double replace = dp[i][j] + getWeight2(c1, c2);
 					double insert = dp[i][j + 1] + 1;
 					double delete = dp[i + 1][j] + 1;
 
@@ -216,13 +215,5 @@ public class WeightedEDA
 		}
 		
 		return dp[len1][len2];
-	}
-
-	public static void main(String[] args)
-	{
-		WeightedEDA weda = new WeightedEDA();
-		System.out.println(weda.getEditDistance("밥을 찌다", "밥을 빕다"));
-		Mongo m = new Mongo();
-		m.insertCorpus();
 	}
 }

@@ -16,12 +16,13 @@ public class AnalyzeServer
 		try 
 		{
 			ServerSocket server = new ServerSocket(80);
+			Cache cache = new Cache();
 			System.out.println("Server is Run!");
 
-			while (true) 
+			while (true)
 			{
 				Socket client = server.accept();
-				Secho_ secho = new Secho_(client);
+				Secho_ secho = new Secho_(client, cache);
 				secho.start();
 			}
 
@@ -36,9 +37,11 @@ public class AnalyzeServer
 class Secho_ extends Thread 
 {
 	private Socket client;
-	Secho_(Socket client) 
+	private Cache cache;
+	Secho_(Socket client, Cache cache) 
 	{
 		this.client = client;
+		this.cache = cache;
 	}
 
 	public void run() 
@@ -113,20 +116,18 @@ class Secho_ extends Thread
 							sendData += "@doubt@";
 
 							ArrayList<String> arr = null;
-							/*
-							if(smi.isContainsCache(part))
+							int index = cache.find(part);
+							if(index != -1)
 							{
-								arr = smi.getCache(part);
+								arr = cache.get(index);
 								System.out.println("cache");
 							}
 							else
 							{
 								arr = smi.getRecommend(part);
-								m.getCollectionCache(part.charAt(0) + "");
-								m.insert_Cache(part, arr.get(0), arr.get(1), arr.get(2));
+								cache.add(part, arr.get(0), arr.get(1), arr.get(2));
 							}
-							*/
-							arr = smi.getRecommend(part);
+							
 							for(int j = 0; j < 3; ++j)
 							{
 								sendData += arr.get(j) + "@";
